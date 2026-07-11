@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splittt - Scan and Split Bills with Friends</title>
+  <!-- Google Fonts: Inter for UI, Outfit for display headings -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tesseract.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Background Glow Effects -->
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        spli<span>ttt</span>
+      </div>
+      <p class="tagline">Snap, split, and settle up with friends in seconds.</p>
+    </header>
+
+    <!-- Stepper Navigation Bar -->
+    <div class="stepper-container">
+      <div class="stepper">
+        <div class="step active" data-step="1">
+          <div class="step-circle">1</div>
+          <span class="step-text">Scan</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" data-step="2">
+          <div class="step-circle">2</div>
+          <span class="step-text">Friends</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" data-step="3">
+          <div class="step-circle">3</div>
+          <span class="step-text">Items</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" data-step="4">
+          <div class="step-circle">4</div>
+          <span class="step-text">Settle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="app-main">
+      
+      <!-- STEP 1: SCAN RECEIPT -->
+      <div id="step-1-view" class="step-view">
+        <div class="card glass scanner-card">
+          <div class="card-header">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            <h2>Scan Receipt</h2>
+          </div>
+          
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
+            <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;">
+            
+            <div class="dropzone-content">
+              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+              </svg>
+              <p class="dropzone-title">Drag & drop receipt here</p>
+              <p class="dropzone-sub">or click to browse files</p>
+              
+              <div class="button-group">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-browse">
+                  Choose File
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-camera">
+                  Use Camera
+                </button>
+              </div>
+            </div>
+            
+            <div class="drag-overlay">Drop image here!</div>
+          </div>
+
+          <div class="demo-box">
+            <span class="demo-text">No receipt handy?</span>
+            <button type="button" class="btn btn-primary btn-sm" id="btn-demo">
+              Load Sample Receipt
+            </button>
+          </div>
+
+          <!-- Preview & Progress Area (hidden by default) -->
+          <div class="scanner-status-area hidden" id="status-area">
+            <div class="preview-wrapper">
+              <img id="receipt-preview" src="" alt="Receipt Preview">
+              <button class="btn-close" id="btn-clear-image" title="Remove image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div class="ocr-progress-container" id="progress-container">
+              <div class="progress-info">
+                <span class="progress-status" id="progress-status">Initializing OCR...</span>
+                <span class="progress-percent" id="progress-percent">0%</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="step-nav-footer border-t">
+            <button type="button" class="btn btn-secondary btn-block" id="btn-skip-scan">
+              Skip & Enter Manually ➔
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: ADD FRIENDS -->
+      <div id="step-2-view" class="step-view hidden">
+        <div class="card glass friends-card">
+          <div class="card-header">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <h2>Add Friends</h2>
+          </div>
+
+          <p class="step-description">Enter the names of everyone who is splitting this bill.</p>
+
+          <div class="add-friend-form">
+            <input type="text" id="friend-name-input" placeholder="Type name..." autocomplete="off">
+            <button type="button" class="btn btn-accent btn-icon" id="btn-add-friend" title="Add Friend">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div class="friends-list" id="friends-list">
+            <!-- Friend avatars will be rendered here dynamically -->
+          </div>
+
+          <div class="step-nav-footer">
+            <button type="button" class="btn btn-secondary" id="btn-step2-back">Back</button>
+            <button type="button" class="btn btn-primary" id="btn-step2-next">Next: Assign Items ➔</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: SPLIT ITEMS -->
+      <div id="step-3-view" class="step-view hidden">
+        <div class="card glass items-card">
+          <div class="card-header justify-between">
+            <div class="header-left">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              <h2>Receipt Items</h2>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-add-item">
+                + Add Item
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-items" title="Clear all items">
+                Clear All
+              </button>
+            </div>
+          </div>
+
+          <p class="step-description">Verify items and prices. Tap **"Split Between"** to assign who pays for what.</p>
+
+          <div class="items-list-container">
+            <div class="items-list-header">
+              <div class="col-item">Item Name</div>
+              <div class="col-price">Price</div>
+              <div class="col-split">Split Between</div>
+              <div class="col-actions"></div>
+            </div>
+            
+            <div class="items-list" id="items-list">
+              <!-- Dynamically populated rows of items -->
+              <div class="empty-state" id="items-empty-state">
+                <p>No items added yet. Enter items manually or go back and scan a receipt.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-nav-footer">
+            <button type="button" class="btn btn-secondary" id="btn-step3-back">Back</button>
+            <button type="button" class="btn btn-primary" id="btn-step3-next">Next: Settle Up ➔</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: ADJUSTMENTS & SETTLE -->
+      <div id="step-4-view" class="step-view hidden">
+        <div class="card glass summary-card">
+          <div class="card-header justify-between">
+            <div class="header-left">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              <h2>Split Summary</h2>
+            </div>
+            <button type="button" class="btn btn-accent btn-sm" id="btn-copy-summary">
+              <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              Copy Breakdown
+            </button>
+          </div>
+
+          <!-- Modifiers Box (Tax, Tip, Discount) -->
+          <div class="modifiers-section border-b-none">
+            <h3>Adjustments</h3>
+            <div class="modifiers-grid">
+              <div class="modifier-input-group">
+                <label for="tax-input">Tax</label>
+                <div class="input-toggle-wrapper">
+                  <input type="number" id="tax-input" min="0" step="any" placeholder="0.00">
+                  <button class="toggle-btn" id="tax-toggle" data-type="percent">%</button>
+                </div>
+              </div>
+
+              <div class="modifier-input-group">
+                <label for="tip-input">Tip</label>
+                <div class="input-toggle-wrapper">
+                  <input type="number" id="tip-input" min="0" step="any" placeholder="0.00">
+                  <button class="toggle-btn" id="tip-toggle" data-type="percent">%</button>
+                </div>
+                <div class="preset-badges">
+                  <button class="badge-btn" data-val="15">15%</button>
+                  <button class="badge-btn" data-val="18">18%</button>
+                  <button class="badge-btn" data-val="20">20%</button>
+                </div>
+              </div>
+
+              <div class="modifier-input-group">
+                <label for="discount-input">Discount</label>
+                <div class="input-toggle-wrapper">
+                  <input type="number" id="discount-input" min="0" step="any" placeholder="0.00">
+                  <button class="toggle-btn" id="discount-toggle" data-type="value">$</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Totals Breakdown -->
+          <div class="summary-totals-grid">
+            <div class="total-row">
+              <span>Subtotal:</span>
+              <span id="subtotal-val">$0.00</span>
+            </div>
+            <div class="total-row">
+              <span>Tax:</span>
+              <span id="tax-val">$0.00</span>
+            </div>
+            <div class="total-row">
+              <span>Tip:</span>
+              <span id="tip-val">$0.00</span>
+            </div>
+            <div class="total-row">
+              <span>Discount:</span>
+              <span id="discount-val">$0.00</span>
+            </div>
+            <div class="total-row grand-total">
+              <span>Grand Total:</span>
+              <span id="total-val">$0.00</span>
+            </div>
+          </div>
+
+          <!-- Individual Breakdowns -->
+          <div class="breakdowns-list" id="breakdowns-list">
+            <!-- Dynamically populated friend list shares -->
+          </div>
+
+          <div class="step-nav-footer">
+            <button type="button" class="btn btn-secondary" id="btn-step4-back">Back to Items</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Item Assignment Overlay Modal -->
+  <div class="modal-overlay hidden" id="assignment-modal">
+    <div class="modal glass">
+      <div class="modal-header">
+        <h3 id="modal-item-name">Assign Item</h3>
+        <button class="btn-close" id="btn-close-modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Who shared <span id="modal-item-desc" class="highlight">this item</span>? (Total: <span id="modal-item-price" class="highlight">$0.00</span>)</p>
+        
+        <div class="modal-actions-bar">
+          <button class="btn btn-secondary btn-xs" id="btn-modal-select-all">Select All</button>
+          <button class="btn btn-secondary btn-xs" id="btn-modal-clear">Clear All</button>
+        </div>
+
+        <div class="friend-selectors-grid" id="modal-friends-grid">
+          <!-- Avatars here to click and select -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-accent btn-block" id="btn-modal-save">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Main Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
