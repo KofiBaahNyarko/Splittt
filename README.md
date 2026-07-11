@@ -34,7 +34,7 @@ splittt/
 
 ## 🧮 How the Splitting Math Works
 
-Splittt uses the **ç** which is the fairest way to distribute extra charges like tax, tip, or discounts:
+Splittt uses prportional allocation which is the fairest way to distribute extra charges like tax, tip, or discounts:
 
 1.  **Individual Subtotal**: For every item, the cost is split evenly among its assigned friends:
     $$\text{Portion} = \frac{\text{Item Price}}{\text{Number of Assigned Friends}}$$
