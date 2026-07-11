@@ -59,7 +59,7 @@ Since Splittt is built using vanilla HTML/CSS/JS, it runs directly in the browse
 To run it, start a simple local server:
 
 ### Using Python (Pre-installed on macOS/Linux)
-Open your terminal in the `/Users/omarinyarko/pallet/splittt/` directory and run:
+Open your terminal in the `.../splittt/` directory and run:
 ```bash
 python3 -m http.server 8200
 ```
