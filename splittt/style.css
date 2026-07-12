@@ -274,6 +274,13 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+.logo-byline {
+  font-size: 0.5em;      /* 20% of the logo size */
+  font-weight: 500;
+  color: #9ca3af;
+  margin-bottom: 0.4em;
+}
+
 .tagline {
   font-size: 0.95rem;
   color: var(--text-muted);
