@@ -1,6 +1,6 @@
 # spli<span>ttt</span> ⚡
 
-**Splittt** is a modern, client-side web application designed to help friends split bills, food, groceries, or any receipt by scanning it (via camera or file upload), parsing the items and prices using on-device OCR, and offering a guided wizard interface to allocate shares, add adjustments, and copy payment breakdowns.
+**Splittt** is a modern, client-side progressive web application designed to help friends split bills, food, groceries, or any receipt by scanning it (via camera or file upload), parsing the items and prices using on-device OCR, and offering a guided wizard interface to allocate shares, add adjustments, and copy payment breakdowns.
 
 ---
 
