@@ -18,6 +18,14 @@ const state = {
   currentStep: 1
 };
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/splittt/sw.js')
+      .then((reg) => console.log('Service worker registered:', reg.scope))
+      .catch((err) => console.error('Service worker registration failed:', err));
+  });
+}
+
 // Available HSL hues for dynamic friend colors
 const FRIEND_HUES = [210, 280, 35, 150, 330, 180, 250, 80, 10, 300];
 let currentHueIndex = 3; // Start after the first 3 preloaded hues
@@ -75,10 +83,9 @@ const btnModalSave = document.getElementById('btn-modal-save');
 const toastContainer = document.getElementById('toast-container');
 
 // Wizard navigation buttons
-const btnSkipScan = document.getElementById('btn-skip-scan');
 const btnStep2Back = document.getElementById('btn-step2-back');
 const btnStep2Next = document.getElementById('btn-step2-next');
-const btnStep3Back = document.getElementById('btn-step3-back');
+const btnStep3Back = document.getElementById('btn-step3-back'); 
 const btnStep3Next = document.getElementById('btn-step3-next');
 const btnStep4Back = document.getElementById('btn-step4-back');
 
@@ -204,7 +211,6 @@ function setupEventListeners() {
   });
 
   // Wizard Navigation binds
-  btnSkipScan.addEventListener('click', () => goToStep(2));
   btnStep2Back.addEventListener('click', () => goToStep(1));
   btnStep2Next.addEventListener('click', () => {
     if (state.friends.length === 0) {

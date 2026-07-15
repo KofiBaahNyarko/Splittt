@@ -212,6 +212,12 @@ body {
   width: 100%;
 }
 
+.btn-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+}
+
 .btn-close {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.05);
