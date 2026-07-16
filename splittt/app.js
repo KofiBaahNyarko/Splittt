@@ -15,12 +15,15 @@ const state = {
   discount: { value: 0, isPercent: false },
   activeModalItemId: null,
   ocrWorker: null,
-  currentStep: 1
+  currentStep: 1,
+  activeTab: 'home',
+  inSplitWorkflow: false,
+  recentReceipts: []
 };
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/splittt/sw.js')
+    navigator.serviceWorker.register('/sw.js')
       .then((reg) => console.log('Service worker registered:', reg.scope))
       .catch((err) => console.error('Service worker registration failed:', err));
   });
@@ -89,13 +92,27 @@ const btnStep3Back = document.getElementById('btn-step3-back');
 const btnStep3Next = document.getElementById('btn-step3-next');
 const btnStep4Back = document.getElementById('btn-step4-back');
 
+const stepperContainer = document.getElementById('stepper-container');
+const bottomNav = document.getElementById('bottom-nav');
+const recentReceiptsList = document.getElementById('recent-receipts-list');
+const allReceiptsList = document.getElementById('all-receipts-list');
+const friendsTabList = document.getElementById('friends-tab-list');
+const friendTabNameInput = document.getElementById('friend-tab-name-input');
+const btnAddFriendTab = document.getElementById('btn-add-friend-tab');
+const recentReceiptsSection = document.querySelector('.recent-receipts-section');
+
+const RECENT_RECEIPTS_KEY = 'splittt_recent_receipts';
+const MAX_RECENT_RECEIPTS = 20;
+
 // 3. INITIALIZATION
 document.addEventListener('DOMContentLoaded', () => {
+  loadRecentReceipts();
   setupEventListeners();
   renderFriends();
   renderItems();
   updateCalculations();
-  goToStep(1); // Ensure we start on step 1
+  renderRecentReceipts();
+  navigateToTab('home');
 });
 
 // 4. EVENT LISTENERS
@@ -136,6 +153,7 @@ function setupEventListeners() {
     receiptPreview.src = '';
     fileInput.value = '';
     cameraInput.value = '';
+    endSplitWorkflow();
     showToast('Image removed', 'info');
   });
 
@@ -146,6 +164,19 @@ function setupEventListeners() {
   btnAddFriend.addEventListener('click', handleAddFriend);
   friendNameInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleAddFriend();
+  });
+
+  btnAddFriendTab.addEventListener('click', () => handleAddFriend(friendTabNameInput));
+  friendTabNameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleAddFriend(friendTabNameInput);
+  });
+
+  // Bottom navigation
+  bottomNav.querySelectorAll('.bottom-nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.inSplitWorkflow) return;
+      navigateToTab(btn.dataset.tab);
+    });
   });
 
   // Item Operations
@@ -192,7 +223,7 @@ function setupEventListeners() {
     });
   });
 
-  // Copy Summary Breakdown
+  // Copy Summary 
   btnCopySummary.addEventListener('click', copySummaryToClipboard);
 
   // Modal actions
@@ -247,22 +278,90 @@ function setupModifierInput(inputEl, toggleEl, modifierObj) {
   }
 }
 
-// 5. WIZARD SCREEN NAVIGATION
+// 5. APP TAB NAVIGATION
+function navigateToTab(tab) {
+  if (state.inSplitWorkflow) return;
+
+  state.activeTab = tab;
+
+  const tabs = ['home', 'receipts', 'friends', 'settings'];
+  tabs.forEach(t => {
+    const view = document.getElementById(`${t === 'friends' ? 'friends-tab' : t}-view`);
+    if (view) {
+      view.classList.toggle('hidden', t !== tab);
+    }
+  });
+
+  bottomNav.querySelectorAll('.bottom-nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+
+  if (tab === 'friends') {
+    renderFriends();
+  }
+}
+
+function startSplitWorkflow() {
+  state.inSplitWorkflow = true;
+  state.currentStep = 1;
+  stepperContainer.classList.remove('hidden');
+  bottomNav.classList.add('hidden');
+  if (recentReceiptsSection) recentReceiptsSection.classList.add('hidden');
+
+  const tabs = ['home', 'receipts', 'friends', 'settings'];
+  tabs.forEach(t => {
+    const view = document.getElementById(`${t === 'friends' ? 'friends-tab' : t}-view`);
+    if (view) view.classList.add('hidden');
+  });
+  document.getElementById('home-view').classList.remove('hidden');
+
+  for (let i = 2; i <= 4; i++) {
+    document.getElementById(`step-${i}-view`).classList.add('hidden');
+  }
+
+  updateStepperUI(1);
+}
+
+function endSplitWorkflow() {
+  state.inSplitWorkflow = false;
+  state.currentStep = 1;
+  stepperContainer.classList.add('hidden');
+  bottomNav.classList.remove('hidden');
+  if (recentReceiptsSection) recentReceiptsSection.classList.remove('hidden');
+
+  for (let i = 2; i <= 4; i++) {
+    document.getElementById(`step-${i}-view`).classList.add('hidden');
+  }
+
+  navigateToTab(state.activeTab || 'home');
+}
+
+// 6. WIZARD SCREEN NAVIGATION
 function goToStep(stepNum) {
   if (stepNum < 1 || stepNum > 4) return;
   state.currentStep = stepNum;
 
-  // Toggle View Cards Visibility
-  for (let i = 1; i <= 4; i++) {
-    const view = document.getElementById(`step-${i}-view`);
-    if (i === stepNum) {
-      view.classList.remove('hidden');
-    } else {
-      view.classList.add('hidden');
+  if (stepNum === 1) {
+    document.getElementById('home-view').classList.remove('hidden');
+    for (let i = 2; i <= 4; i++) {
+      document.getElementById(`step-${i}-view`).classList.add('hidden');
+    }
+  } else {
+    document.getElementById('home-view').classList.add('hidden');
+    for (let i = 2; i <= 4; i++) {
+      const view = document.getElementById(`step-${i}-view`);
+      view.classList.toggle('hidden', i !== stepNum);
     }
   }
 
-  // Update Stepper Progress Bar
+  updateStepperUI(stepNum);
+
+  if (stepNum === 2) {
+    setTimeout(() => friendNameInput.focus(), 150);
+  }
+}
+
+function updateStepperUI(stepNum) {
   const stepsElements = document.querySelectorAll('.stepper .step');
   const stepLines = document.querySelectorAll('.stepper .step-line');
 
@@ -280,20 +379,86 @@ function goToStep(stepNum) {
   });
 
   stepLines.forEach((lineEl, idx) => {
-    if (idx + 1 < stepNum) {
-      lineEl.classList.add('completed');
-    } else {
-      lineEl.classList.remove('completed');
-    }
+    lineEl.classList.toggle('completed', idx + 1 < stepNum);
   });
-  
-  // Focus logic for input elements when entering a step
-  if (stepNum === 2) {
-    setTimeout(() => friendNameInput.focus(), 150);
+}
+
+// 7. RECENT RECEIPTS
+function loadRecentReceipts() {
+  try {
+    const stored = localStorage.getItem(RECENT_RECEIPTS_KEY);
+    state.recentReceipts = stored ? JSON.parse(stored) : [];
+  } catch {
+    state.recentReceipts = [];
   }
 }
 
-// 6. TOAST ALERTS
+function saveRecentReceipts() {
+  localStorage.setItem(RECENT_RECEIPTS_KEY, JSON.stringify(state.recentReceipts));
+}
+
+function addReceiptToHistory(name, total, itemCount) {
+  const receipt = {
+    id: 'r_' + Date.now(),
+    name: name || 'Receipt',
+    total: total,
+    itemCount: itemCount,
+    date: new Date().toISOString()
+  };
+
+  state.recentReceipts.unshift(receipt);
+  if (state.recentReceipts.length > MAX_RECENT_RECEIPTS) {
+    state.recentReceipts = state.recentReceipts.slice(0, MAX_RECENT_RECEIPTS);
+  }
+
+  saveRecentReceipts();
+  renderRecentReceipts();
+}
+
+function renderRecentReceipts() {
+  const recentLimit = 5;
+  renderReceiptList(recentReceiptsList, state.recentReceipts.slice(0, recentLimit));
+  renderReceiptList(allReceiptsList, state.recentReceipts);
+}
+
+function renderReceiptList(container, receipts) {
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (receipts.length === 0) {
+    container.innerHTML = '<div class="receipts-empty">No receipts yet. Scan one to get started!</div>';
+    return;
+  }
+
+  receipts.forEach(receipt => {
+    const card = document.createElement('div');
+    card.className = 'receipt-card';
+    const dateStr = formatReceiptDate(receipt.date);
+    card.innerHTML = `
+      <div class="receipt-card-icon">📄</div>
+      <div class="receipt-card-info">
+        <div class="receipt-card-name">${escapeHtml(receipt.name)}</div>
+        <div class="receipt-card-meta">${dateStr} · ${receipt.itemCount} item${receipt.itemCount !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="receipt-card-amount">$${receipt.total.toFixed(2)}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function formatReceiptDate(isoDate) {
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// 8. TOAST ALERTS
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
@@ -309,12 +474,14 @@ function showToast(message, type = 'info') {
   }, 3000);
 }
 
-// 7. OCR AND RECEIPT SCANNING
+// 9. OCR AND RECEIPT SCANNING
 async function handleImageUpload(file) {
   if (!file.type.startsWith('image/')) {
     showToast('Please upload an image file.', 'error');
     return;
   }
+
+  startSplitWorkflow();
 
   // Display Image Preview
   const imageUrl = URL.createObjectURL(file);
@@ -368,6 +535,10 @@ async function handleImageUpload(file) {
       renderItems();
       updateCalculations();
       showToast(`Successfully scanned ${parsed.items.length} items!`, 'success');
+
+      const subtotal = parsed.items.reduce((sum, item) => sum + item.price, 0);
+      const receiptName = parsed.items[0]?.desc || 'Scanned Receipt';
+      addReceiptToHistory(receiptName, subtotal + (parsed.tax || 0) + (parsed.tip || 0), parsed.items.length);
 
       // Auto-advance to Step 2 (Friends)
       setTimeout(() => {
@@ -476,8 +647,10 @@ function parseReceiptText(text) {
   return result;
 }
 
-// 9. SIMULATED DEMO RECEIPT SCANNED
+// 10. SIMULATED DEMO RECEIPT SCANNED
 function loadDemoReceipt() {
+  startSplitWorkflow();
+
   receiptPreview.src = 'assets/receipt_sample.png';
   statusArea.classList.remove('hidden');
   progressContainer.classList.remove('hidden');
@@ -524,6 +697,9 @@ function loadDemoReceipt() {
         updateCalculations();
         showToast('Sample receipt loaded and pre-split!', 'success');
 
+        const subtotal = state.items.reduce((sum, item) => sum + item.price, 0);
+        addReceiptToHistory('Sample Receipt', subtotal + 2.72, state.items.length);
+
         // Auto advance to Friends step!
         setTimeout(() => {
           goToStep(2);
@@ -533,9 +709,10 @@ function loadDemoReceipt() {
   }, 100);
 }
 
-// 10. FRIENDS MANAGEMENT
-function handleAddFriend() {
-  const name = friendNameInput.value.trim();
+// 11. FRIENDS MANAGEMENT
+function handleAddFriend(inputEl) {
+  const input = inputEl || friendNameInput;
+  const name = input.value.trim();
   if (!name) return;
 
   const nameParts = name.split(/\s+/);
@@ -559,8 +736,8 @@ function handleAddFriend() {
   };
 
   state.friends.push(newFriend);
-  friendNameInput.value = '';
-  friendNameInput.focus();
+  input.value = '';
+  input.focus();
 
   renderFriends();
   updateCalculations();
@@ -589,23 +766,26 @@ function removeFriend(id) {
 }
 
 function renderFriends() {
-  friendsList.innerHTML = '';
-  state.friends.forEach(friend => {
-    const pill = document.createElement('div');
-    pill.className = 'friend-pill';
-    pill.innerHTML = `
-      <div class="avatar" style="background-color: ${friend.color};">${friend.initials}</div>
-      <span class="friend-name">${friend.name}</span>
-      ${friend.id !== 'f1' ? `
-        <button class="btn-close" onclick="removeFriend('${friend.id}')" title="Remove ${friend.name}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      ` : ''}
-    `;
-    friendsList.appendChild(pill);
+  const lists = [friendsList, friendsTabList].filter(Boolean);
+  lists.forEach(list => {
+    list.innerHTML = '';
+    state.friends.forEach(friend => {
+      const pill = document.createElement('div');
+      pill.className = 'friend-pill';
+      pill.innerHTML = `
+        <div class="avatar" style="background-color: ${friend.color};">${friend.initials}</div>
+        <span class="friend-name">${friend.name}</span>
+        ${friend.id !== 'f1' ? `
+          <button class="btn-close" onclick="removeFriend('${friend.id}')" title="Remove ${friend.name}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        ` : ''}
+      `;
+      list.appendChild(pill);
+    });
   });
 }
 
@@ -1049,10 +1229,34 @@ function copySummaryToClipboard() {
   text += `Generated with splittt ⚡`;
 
   // Write text output to local user clipboard
+if (navigator.clipboard && window.isSecureContext) {
   navigator.clipboard.writeText(text).then(() => {
     showToast('Breakdown copied to clipboard!', 'success');
   }).catch(err => {
     console.error('Could not copy text: ', err);
-    showToast('Failed to copy to clipboard', 'error');
+    fallbackCopyText(text);
   });
+} else {
+  fallbackCopyText(text);
+}
+}
+
+
+// New helper function — add this anywhere else in app.js, outside copySummaryToClipboard
+function fallbackCopyText(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    showToast('Breakdown copied to clipboard!', 'success');
+  } catch (err) {
+    console.error('Fallback copy failed: ', err);
+    showToast('Failed to copy — try selecting manually', 'error');
+  }
+  document.body.removeChild(textarea);
 }

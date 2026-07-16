@@ -31,8 +31,8 @@
       <p class="tagline">Splittt receipts fairly in under 30 seconds.</p>
     </header>
 
-    <!-- Stepper Navigation Bar -->
-    <div class="stepper-container">
+    <!-- Stepper Navigation Bar (hidden until user begins a split) -->
+    <div class="stepper-container hidden" id="stepper-container">
       <div class="stepper">
         <div class="step active" data-step="1">
           <div class="step-circle">1</div>
@@ -59,15 +59,15 @@
     <!-- Main Workspace -->
     <main class="app-main">
       
-      <!-- STEP 1: SCAN RECEIPT -->
-      <div id="step-1-view" class="step-view">
+      <!-- HOME TAB -->
+      <div id="home-view" class="tab-view">
         <div class="card glass scanner-card">
           <div class="card-header">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            <h2>Scan Receipt</h2>
+            <h2>Home</h2>
           </div>
           
           <div class="dropzone" id="dropzone">
@@ -120,6 +120,92 @@
               <div class="progress-bar-bg">
                 <div class="progress-bar-fill" id="progress-bar" style="width: 0%;"></div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Receipts -->
+        <section class="recent-receipts-section">
+          <div class="section-header">
+            <h3>Recent Receipts</h3>
+          </div>
+          <div class="recent-receipts-list" id="recent-receipts-list">
+            <!-- Populated dynamically -->
+          </div>
+        </section>
+      </div>
+
+      <!-- RECEIPTS TAB -->
+      <div id="receipts-view" class="tab-view hidden">
+        <div class="card glass">
+          <div class="card-header">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <h2>Receipts</h2>
+          </div>
+          <p class="step-description">All your past splits in one place.</p>
+          <div class="recent-receipts-list" id="all-receipts-list">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- FRIENDS TAB -->
+      <div id="friends-tab-view" class="tab-view hidden">
+        <div class="card glass friends-card">
+          <div class="card-header">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <h2>Friends</h2>
+          </div>
+          <p class="step-description">Manage the people you split bills with.</p>
+
+          <div class="add-friend-form">
+            <input type="text" id="friend-tab-name-input" placeholder="Type name..." autocomplete="off">
+            <button type="button" class="btn btn-accent btn-icon" id="btn-add-friend-tab" title="Add Friend">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div class="friends-list" id="friends-tab-list">
+            <!-- Friend avatars rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div id="settings-view" class="tab-view hidden">
+        <div class="card glass">
+          <div class="card-header">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <h2>Settings</h2>
+          </div>
+          <div class="settings-list">
+            <div class="settings-item">
+              <span class="settings-label">App Version</span>
+              <span class="settings-value">1.0.0</span>
+            </div>
+            <div class="settings-item">
+              <span class="settings-label">Currency</span>
+              <span class="settings-value">USD ($)</span>
+            </div>
+            <div class="settings-item">
+              <span class="settings-label">Default Tip</span>
+              <span class="settings-value">18%</span>
             </div>
           </div>
         </div>
@@ -219,14 +305,14 @@
                 <line x1="12" y1="1" x2="12" y2="23"/>
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
               </svg>
-              <h2>Split Summary</h2>
+              <h2> Summary</h2>
             </div>
             <button type="button" class="btn btn-accent btn-sm" id="btn-copy-summary">
               <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
               </svg>
-              Copy Breakdown
+              Copy 
             </button>
           </div>
 
@@ -335,6 +421,26 @@
 
   <!-- Toast Notification System -->
   <div class="toast-container" id="toast-container"></div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button type="button" class="bottom-nav-item active" data-tab="home">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Home</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-tab="receipts">
+      <span class="nav-icon">📄</span>
+      <span class="nav-label">Receipts</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-tab="friends">
+      <span class="nav-icon">👥</span>
+      <span class="nav-label">Friends</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-tab="settings">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Settings</span>
+    </button>
+  </nav>
 
   <!-- Main Application Script -->
   <script src="app.js"></script>

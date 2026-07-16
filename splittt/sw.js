@@ -1,11 +1,11 @@
 const CACHE_NAME = 'splittt-v1';
 const ASSETS_TO_CACHE = [
-  '/splittt/index.html',
-  '/splittt/style.css',
-  '/splittt/app.js',
-  '/splittt/manifest.json',
-  '/splittt/assets/icon-192.png',
-  '/splittt/assets/icon-512.png'
+  '/index.html',
+  '/style.css',
+  '/app.js',
+  '/manifest.json',
+  '/assets/icon-192.png',
+  '/assets/icon-512.png'
 ];
 
 // Install: cache core assets
